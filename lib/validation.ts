@@ -1,0 +1,105 @@
+import { z } from "zod";
+const s = z.string().max(15000),
+  id = z.string().min(1).max(100),
+  list = z.array(id).max(500);
+export const intentionSchema = z.object({
+  status: s,
+  role: s,
+  secondary: s,
+  objective: s,
+  custom: s,
+  pace: s,
+  boundaries: s,
+  confirmed: z.boolean(),
+  version: z.number().int().positive(),
+});
+export const moveSchema = z.object({
+  id,
+  title: s,
+  description: s,
+  draft: s,
+  fit: s,
+  tradeoff: s,
+  assumption: s,
+  timing: s,
+  stop: s,
+  branches: z.array(s).max(8),
+  sourceIds: list,
+});
+export const claimSchema = z.object({
+  label: z.enum(["Explicit", "Context-supported", "Plausible", "Unknown"]),
+  text: s,
+  sourceIds: list,
+});
+export const reviewContentSchema = z.object({
+  summary: s,
+  claims: z.array(claimSchema).max(12),
+  unknown: s,
+  question: s,
+  disagreement: s,
+  perspectives: z.array(z.object({ name: s, reading: s })).max(8),
+  moves: z.array(moveSchema).max(3),
+});
+export const reviewSchema = reviewContentSchema.extend({
+  id,
+  mode: z.enum(["standard", "perspectives"]),
+  origin: z.enum(["example", "live"]),
+  revision: z.number(),
+  goalVersion: z.number(),
+  created: s,
+  status: s.optional(),
+  selectedMessageId: s.optional(),
+});
+export const messageSchema = z.object({
+  id,
+  speaker: z.enum(["her", "you"]),
+  text: s.min(1),
+  date: s,
+  kind: z.enum(["Message", "My impression", "She said", "Event"]),
+});
+export const decisionSchema = z.object({
+  id,
+  date: s,
+  goal: intentionSchema,
+  stage: s,
+  sourceIds: list,
+  reading: s,
+  move: moveSchema,
+  expectation: s,
+  actualAction: s,
+  actualText: s,
+  outcome: s,
+  outcomeKind: s,
+  revision: s,
+  needsReview: z.boolean().optional(),
+  preparedDraft: s.optional(),
+  outcomeMessageId: s.optional(),
+  outcomeDate: s.optional(),
+  checkedInAt: s.optional(),
+});
+export const profileSchema = z.object({
+  id,
+  name: z.string().min(1).max(70),
+  age: s,
+  met: s,
+  stage: s,
+  current: s,
+  stated: s,
+  context: s,
+  boundary: s,
+  adult: z.literal(true),
+  archived: z.boolean(),
+  color: s,
+  intention: intentionSchema,
+  messages: z.array(messageSchema).max(500),
+  decisions: z.array(decisionSchema).max(300),
+  review: reviewSchema.nullable(),
+  revision: z.number().int(),
+  example: s.optional(),
+});
+export const workspaceSchema = z.object({
+  profiles: z.array(profileSchema).max(40),
+  style: s,
+  retention: z.enum(["until-deleted", "30-days", "90-days"]),
+  updated: s.optional(),
+});
