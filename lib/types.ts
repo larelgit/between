@@ -4,6 +4,7 @@ export type Message = {
   text: string;
   date: string;
   kind: "Message" | "My impression" | "She said" | "Event";
+  source?: "screenshot";
 };
 export type Intention = {
   status: string;

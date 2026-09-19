@@ -56,6 +56,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeToggle } from "./theme";
+import { ScreenshotImport } from "./screenshot-import";
+import { prepareScreenshotMessages } from "@/lib/screenshot-import";
 import { z } from "zod";
 import { workspaceSchema, reviewSchema } from "@/lib/validation";
 import { readApiResponse } from "@/lib/api-response";
@@ -1187,6 +1189,7 @@ export default function BetweenApp() {
                       <div>
                         <h2>Conversation</h2>
                       </div>
+                      <div className="button-row chat-import-actions">
                       <button
                         className="button secondary"
                         disabled={controlsDisabled}
@@ -1198,6 +1201,8 @@ export default function BetweenApp() {
                         <Plus size={15} />
                         Add messages
                       </button>
+                      <button className="button secondary" disabled={controlsDisabled} onClick={() => setModal("screenshot")}>Upload screenshot</button>
+                      </div>
                     </div>
                     <p className="inline-note">
                       Select a message to explore it. This is a record of your
@@ -1222,7 +1227,7 @@ export default function BetweenApp() {
                             }}
                           >
                             <small>
-                              {m.speaker === "you" ? "You" : p.name} · {m.kind}
+                              {m.speaker === "you" ? "You" : p.name} · {m.source === "screenshot" ? "Screenshot" : m.kind}
                             </small>
                             <p>{m.text}</p>
                             <span className="message-date">
@@ -1682,6 +1687,25 @@ export default function BetweenApp() {
               )
             )
               setModal("");
+          }}
+        />
+      )}
+      {p && modal === "screenshot" && (
+        <ScreenshotImport
+          key={p.id}
+          profile={p}
+          config={{ provider, model, key: apiKey }}
+          onClose={() => setModal("")}
+          onSettings={openSettings}
+          onSave={async (rows) => {
+            const current = dataRef.current.profiles.find((profile) => profile.id === p.id);
+            if (!current) throw Error("This connection is no longer available.");
+            const { messages, duplicates } = prepareScreenshotMessages(rows, current.messages);
+            if (!messages.length) throw Error("These messages are already in this conversation.");
+            const ok = await updateProfile(invalidate({ ...current, messages: [...current.messages, ...messages] }),
+              `${messages.length} ${messages.length === 1 ? "message" : "messages"} imported${duplicates ? `; ${duplicates} duplicate${duplicates === 1 ? "" : "s"} skipped` : ""}`);
+            if (ok) { setModal(""); setTab("chat"); setSelectedId(messages[0].id); }
+            return ok;
           }}
         />
       )}

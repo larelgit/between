@@ -13,6 +13,7 @@ Between is a private workspace for making sense of an adult talking-stage conver
 The workflow is simple: **record the conversation → separate evidence from interpretation → choose a next step → reflect on the outcome.**
 
 - Keep each connection's messages, context, and intention separate.
+- Import a conversation screenshot, correct its text and speakers, then add the confirmed messages to history.
 - Read source-linked claims with explicit uncertainty and alternative explanations.
 - Compare different actions, edit a draft in your own voice, and save a decision before acting.
 - Record the actual action and outcome without rewriting the original recommendation.
@@ -55,6 +56,9 @@ flowchart TD
     Auth --> UI[React workspace]
     UI -->|Read / conditional versioned save| Workspace[Workspace API]
     Workspace -->|Owner-scoped row| D1[(D1 / SQLite)]
+    UI -->|Screenshot + consent + session key| Transcribe[Transcription API]
+    Transcribe -->|Image input / structured text| Providers[Selected OpenAI or Gemini model]
+    Providers -->|Editable messages| UI
     UI -->|One profile + consent + session key| Review[Review API]
     Review --> Guard[Validate inputs and boundaries]
     Guard --> Engine[Review orchestrator]
@@ -94,7 +98,7 @@ tests/               Mocked provider contracts and data lifecycle tests
 | Explicit partial/error states | Avoid treating failed reviewers as agreement | A provider failure can stop the workflow |
 | Empty starting workspace | Keep fictional examples out of real users' records | First use requires adding a connection |
 
-The default model IDs are `gpt-6-astra` and `gemini-3.8-flash`; account availability still applies and the model field is editable. [The registry](lib/ai-config.ts) sets reasoning/thinking effort by task: low for reciprocity extraction, medium for standard/conservative reading and synthesis, and high for alternatives, strategy, and critique. OpenAI verbosity is low or medium; Gemini receives equivalent writing instructions.
+The default model IDs are `gpt-6-astra` and `gemini-3.8-flash`; account availability still applies and the model field is editable. [The registry](lib/ai-config.ts) sets reasoning/thinking effort by task: low for screenshot transcription and reciprocity extraction, medium for standard/conservative reading and synthesis, and high for alternatives, strategy, and critique. OpenAI verbosity is low or medium; Gemini receives equivalent writing instructions.
 
 Requests omit application output-token caps and numeric thinking budgets. A five-minute transport deadline bounds each call. There are no automatic paid retries or silent model substitutions. Unrecognized custom models use provider-default reasoning and must support the structured-output contract.
 
@@ -113,12 +117,14 @@ npm run dev
 
 Open **http://localhost:5173** and use the local sign-in flow. It creates a development identity restricted to loopback requests. Local data stays in the ignored `.wrangler/` directory. A new workspace is empty.
 
-For live reviews, open **Settings**, choose a provider/model, enter an API key, and acknowledge the processing scope. Provider usage can incur charges. Reloading clears the key.
+For screenshot imports, open a connection’s **Chat → Upload screenshot**. Choose a PNG, JPEG, or WebP image up to 8 MB, indicate which side contains your messages, and confirm provider processing. Review the extracted messages before saving. Dates remain unknown unless you enter them; only confirmed text is stored, not the image.
+
+For live reviews or screenshot transcription, open **Settings**, choose a provider/model, enter an API key, and acknowledge the processing scope. Provider usage can incur charges. Reloading clears the key.
 
 ```sh
 npm run lint       # Zero warnings required
 npm run typecheck  # TypeScript checks
-npm test           # 26 named tests; mocked transport, no paid API calls
+npm test           # 35 named tests; mocked transport, no paid API calls
 npm run build      # Client and Worker production bundles
 npm run check      # All four checks, in CI order
 ```
@@ -132,7 +138,7 @@ CI runs the same checks on pushes to `main` and pull requests, without provider 
 - **Hosting is coupled to trusted authentication headers.** The deployed app uses its hosting authentication boundary. Deploying the Worker elsewhere requires a real authentication integration that strips spoofed identity headers. The local mock is for loopback development only.
 - **Persistence is intentionally simple.** A workspace is one versioned JSON row. There is no automatic conflict merge, offline sync, or immutable server-side audit trail.
 - **Retention is lazy.** Dated evidence expires on the next read/save. Undated evidence remains until removed. Deletion does not remove prior exports, provider records, or platform backups.
-- **Conversation entry is manual.** There are no dating-app integrations, screenshot OCR, background imports, or automated sending. Some UI copy currently assumes a female conversation partner.
+- **Screenshot reading needs review.** Blurry text, cropped messages, and speaker assignment can be wrong. Import handles one screenshot at a time and requires an image-capable model. There are no dating-app integrations, background imports, or automated sending. Some UI copy currently assumes a female conversation partner.
 - **Validation has practical limits.** Adult confirmation is self-attested. Source checks verify that an ID exists, not that an interpretation is correct. Snapshot immutability is a UI convention, not a database guarantee.
 - **Further testing is needed.** Automated coverage focuses on provider/data contracts. Full browser automation, multi-user D1 integration, accessibility audits, and live-model evaluations remain future work. Vinext is a beta dependency.
 

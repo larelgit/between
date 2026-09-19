@@ -14,7 +14,7 @@ A few engineering decisions behind it:
 • Versioned saves reject conflicting updates from another session.
 • OpenAI and Gemini adapters use structured output, task-specific reasoning settings, and session-only API keys.
 
-Built with React, TypeScript, Vinext, Cloudflare Workers, and D1. The repository includes 26 contract/data tests, CI, an architecture diagram, and a candid list of limitations.
+Built with React, TypeScript, Vinext, Cloudflare Workers, and D1. The repository includes 35 contract/data tests, CI, an architecture diagram, and a candid list of limitations.
 
 The video uses fictional conversations. Between is a prototype for reflection and decision-making; it never sends messages or claims to know someone's feelings.
 

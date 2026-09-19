@@ -4,7 +4,7 @@
 **Application baseline:** GitHub showcase release  
 **Scope:** the application source, configuration, migration, tests, and local supporting artifacts in this checkout.
 
-Between is a private workspace for recording an adult talking-stage conversation, separating evidence from interpretation, choosing a next step, and recording what actually happened. The core application is implemented and builds successfully. It has persistent per-user storage and two AI provider adapters, but live provider behavior and production deployment were not verified during this documentation review. Lint, type checks, and the 26 named tests pass; CI also builds the production bundles.
+Between is a private workspace for recording an adult talking-stage conversation, separating evidence from interpretation, choosing a next step, and recording what actually happened. The core application is implemented and builds successfully. It has persistent per-user storage and two AI provider adapters, but live provider behavior and production deployment were not verified during this documentation review. Lint, type checks, and the 35 named tests pass; CI also builds the production bundles.
 
 This guide describes the code as it exists. “Implemented” means a feature has a code path; it does not by itself mean that the feature has passed browser, production, security, or live-provider testing. Recommendations below are proposed work, not completed features or an agreed delivery schedule.
 
@@ -99,9 +99,11 @@ The confirmed intention gets a version number. Changing that intention later mak
 
 The **Conversation** view accepts a message or multiple nonblank lines. Each line becomes a separate record. Recognized prefixes are `You:`, `Me:`, `Her:`, and the profile alias followed by a colon. Other lines use the selected speaker.
 
-Each import uses one selected date and one selected source type for its records. Dates can be blank and are shown as unknown. The importer does not infer message timestamps or reconstruct multi-line chat formats.
+Each text import uses one selected date and one selected source type for its records. Dates can be blank and are shown as unknown. The importer does not infer message timestamps or reconstruct multi-line chat formats.
 
 Supported source types are `Message`, `She said`, `My impression`, and `Event`. Duplicate filtering compares the trimmed text and speaker. A matching pair is considered a duplicate if either date is missing or both dates match. Different known dates allow the same wording to be recorded again.
+
+**Upload screenshot** accepts one PNG, JPEG, or WebP image up to 8 MB. With explicit consent it sends that image to the selected provider using the session key. The structured result is editable: assign speakers, correct text, exclude rows, and optionally set dates. Visible timestamps are hints only. Confirmed messages are marked `source: "screenshot"`; the image is never persisted. Import uses the same duplicate rule and invalidates earlier reviews when the evidence changes. Screenshot extraction uses low effort and low verbosity, without output-token caps.
 
 The context form records the current stage, what currently exists, stated preferences, shared context, and one boundary value. All boundary values other than `None stated` block AI review, including `Friendship only`. This is broader than blocking only no-contact situations.
 
@@ -460,7 +462,7 @@ The portable script defaults to port 5173. Open [the local application](http://l
 | `npm run start` | Serve built output through local Wrangler, persisting local state |
 | `npm run lint` | ESLint across the checkout, excluding configured build directories |
 | `npm run typecheck` | Type-check the project |
-| `npm test` | Run 26 named tests using mocked provider transport |
+| `npm test` | Run 35 named tests using mocked provider transport |
 | `npm run check` | Run the same lint/type/test/build checks as CI |
 | `npm run db:generate` | Generate a SQL migration from the Drizzle schema; does not apply it |
 
@@ -491,7 +493,7 @@ Run `npm test` for the Node test runner through `tsx`. The suite uses mocked pro
 
 The showcase release adds `.github/workflows/ci.yml` and a standard `npm test` command. See [VERIFICATION.md](VERIFICATION.md) for the latest check results and their limits.
 
-The 26 tests cover provider request contracts, task settings, custom models, incomplete output, profile isolation, missing reviewers, source IDs, numerical predictions, intention and boundary gates, retention, safe legacy cleanup, and API errors. Real provider calls are not made.
+The 35 tests cover provider request contracts, task settings, custom models, incomplete output, profile isolation, missing reviewers, source IDs, numerical predictions, intention and boundary gates, retention, safe legacy cleanup, and API errors. Real provider calls are not made.
 
 Browser checks during release preparation exercised draft edits, saved decision snapshots, provider settings, theme hydration, and mobile layout. Full authenticated route/D1 integration and an automated browser suite remain future work.
 
@@ -520,7 +522,7 @@ The following are grounded in the current code. Priorities are suggested sequenc
 
 ### Product and operational extensions
 
-The app currently has no export restore, attachment handling, screenshot/OCR ingestion, messaging-platform import, notification scheduler, multi-user collaboration, background review job, application rate limiter, usage/cost dashboard, or application analytics integration.
+The app currently has no export restore, persistent attachments, messaging-platform import, notification scheduler, multi-user collaboration, background review job, application rate limiter, usage/cost dashboard, or application analytics integration.
 
 Useful follow-on decisions include whether to add validated JSON restore, support gender-neutral language, split custom connection and role text into separate fields, and support a more nuanced boundary policy. The current single `intention.custom` field is shared by both custom intention and custom role inputs.
 

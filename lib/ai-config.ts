@@ -16,6 +16,12 @@ type TaskSettings = {
 // Reasoning depth and answer length are independent. These are starting
 // presets for this workload, not claims of benchmark-optimal settings.
 export const REVIEW_TASKS = {
+  screenshot: {
+    label: "Screenshot transcription",
+    effort: "low",
+    verbosity: "low",
+    focus: "Transcribe every readable message verbatim in visual order. Preserve language and punctuation. Do not summarize, interpret, or fill gaps.",
+  },
   standard: {
     label: "Standard review",
     effort: "medium",

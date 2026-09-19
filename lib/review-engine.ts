@@ -71,10 +71,11 @@ export async function callModel(
   payload: unknown,
   schema: unknown,
   fetcher: typeof fetch = fetch,
+  options?: { image: { mimeType: string; data: string }; system: string },
 ) {
   const settings = REVIEW_TASKS[task];
   const tuned = hasTaskTuning(c.provider, c.model);
-  const system = [SYSTEM, taskInstructions(task), instructions].join("\n\n");
+  const system = [options?.system ?? SYSTEM, taskInstructions(task), instructions].join("\n\n");
   // A transport deadline prevents hung requests; it is not a token budget.
   const timeout = AbortSignal.timeout(300000);
   let response: Response;
@@ -89,7 +90,10 @@ export async function callModel(
         model: c.model,
         store: false,
         instructions: system,
-        input: JSON.stringify(payload),
+        input: options ? [{ role: "user", content: [
+          { type: "input_text", text: JSON.stringify(payload) },
+          { type: "input_image", image_url: `data:${options.image.mimeType};base64,${options.image.data}`, detail: "high" },
+        ] }] : JSON.stringify(payload),
         ...(tuned ? { reasoning: { effort: settings.effort } } : {}),
         text: {
           ...(tuned ? { verbosity: settings.verbosity } : {}),
@@ -117,7 +121,10 @@ export async function callModel(
             parts: [{ text: system }],
           },
           contents: [
-            { role: "user", parts: [{ text: JSON.stringify(payload) }] },
+            { role: "user", parts: [
+              { text: JSON.stringify(payload) },
+              ...(options ? [{ inlineData: { mimeType: options.image.mimeType, data: options.image.data } }] : []),
+            ] },
           ],
           generationConfig: {
             ...(tuned

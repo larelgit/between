@@ -56,6 +56,7 @@ export const messageSchema = z.object({
   text: s.min(1),
   date: s,
   kind: z.enum(["Message", "My impression", "She said", "Event"]),
+  source: z.literal("screenshot").optional(),
 });
 export const decisionSchema = z.object({
   id,

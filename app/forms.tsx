@@ -444,6 +444,7 @@ export function MessageForm({
       }
       return {
         id: editing?.id || crypto.randomUUID(),
+        ...(editing?.source ? { source: editing.source } : {}),
         speaker: who as "her" | "you",
         text: value.trim(),
         date,

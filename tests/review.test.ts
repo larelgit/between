@@ -113,7 +113,7 @@ test("all failed evidence readers abort before strategy or synthesis", async () 
 
 for (const provider of ["openai", "gemini"] as const) {
   const providerConfig = { ...config, provider, model: DEFAULT_MODELS[provider] };
-  test(`${provider}: all seven task settings, structured output, and no token caps`, async () => {
+  test(`${provider}: all task settings, structured output, and no token caps`, async () => {
     const efforts: string[] = [], details: string[] = [];
     const transport: typeof fetch = async (_url, init) => {
       const raw = requestBody(init);
